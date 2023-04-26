@@ -38,7 +38,7 @@ def prep_telco(data):
 
     the_columns = the_columns.drop(['customer_id', 'total_charges'])
 
-    dummy = pd.get_dummies(data, columns = the_columns, drop_first=True)
+    dummy = pd.get_dummies(data[the_columns], drop_first=True)
 
     # for i in dummy.columns:
     #     dummy[i] = dummy[i].str.replace('0', 0)
@@ -54,8 +54,11 @@ def prep_telco(data):
     data = data.rename(columns={"payment_type_Credit card (automatic)": "payment_type_Credit_card",
                                 "payment_type_Electronic check":'payment_type_Electronic_check',
                                 "payment_type_Mailed check":'payment_type_Mailed_check'
-                                
                                 })
+    the_columns = data.columns
+
+    for i in data.columns[21:]:
+        data[i] = data[i].astype(int)
     
     return data 
 
