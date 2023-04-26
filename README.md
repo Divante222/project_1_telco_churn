@@ -28,7 +28,7 @@
     - Fix the total_charges column by filling the the spaces with 0 because the people who have a space in their total_charges column have not yet paid their first months bill
     - Convert total_charges column to a float
     - Convert the dummy columns to integers
-    - 
+    
     
 - Explore the data in search of drivers of churn
     
