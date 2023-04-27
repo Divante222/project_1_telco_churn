@@ -419,13 +419,22 @@ def getting_subgroup(columns, train):
 
     return the_list
 
-def get_barplot_for_everything(train):
+def get_barplot_for_everything(train,name):
     '''
     gets the barplot for everything
     '''
-    for i in train.columns:
-        print(i)
-
-        plt.title('Does',str(i),'affect churn')
-        ax = sns.countplot(x=i, data = train, hue = 'churn_Yes')
-        plt.show()
+    count = 1
+  
+    plt.figure(figsize=(20.0, 20.0))
+    for i in train.columns[21:]:
+        
+        if i != name:
+            
+            
+            plt.title(f'Does {str(i)} affect churn')
+            plt.subplot(10, 2, count)
+            sns.countplot(x=i, data = train, hue = 'churn_Yes')
+            count +=1
+            
+    
+    plt.show()
