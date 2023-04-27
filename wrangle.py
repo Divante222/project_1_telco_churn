@@ -53,9 +53,9 @@ def prep_telco(data):
     #                  'contract_type_id','Unnamed: 0'])
     
     the_columns = data.select_dtypes('object').columns
-
-    the_columns = the_columns.drop(['customer_id', 'total_charges'])
-
+    
+    the_columns = the_columns.drop(['customer_id', 'total_charges','internet_service_type'])
+    
     dummy = pd.get_dummies(data[the_columns], drop_first=True)
 
     # for i in dummy.columns:
@@ -161,6 +161,7 @@ def get_barplot_payment_type(train):
     plt.title('Does payment type affect churn')
     ax = sns.countplot(x='payment_type', data = train, hue = 'churn_Yes')
     ax.tick_params(axis='x', rotation=30)
+    
     plt.show()
 
 
@@ -184,6 +185,7 @@ def get_barplot_tech_support(train):
     '''
     gets the barplot for tech_support
     '''
+    
     plt.title('Does tech_support affect churn')
     ax = sns.countplot(x='tech_support_Yes', data = train, hue = 'churn_Yes')
     plt.show()
@@ -210,6 +212,7 @@ def finding_baseline(train):
     train['baseline'] = 0
     baseline = (train.baseline == train.churn_Yes).mean()
     print('Baseline',baseline)
+    return baseline
 
 def model_setup(train, validate, test, columns):
     '''
@@ -245,17 +248,17 @@ def create_csv(tree, X_test, test):
     the_csv_dataframe.to_csv('Churn_Predictions.csv')
     return the_csv_dataframe
 
-def create_descision_tree(X_train,y_train, X_validate, y_validate):
+def create_descision_tree(X_train,y_train, X_validate, y_validate,max_depth):
     '''
     creating a Decision tree model
     fitting the Descision tree model
     predicting the training and validate data
     '''
-    tree = DecisionTreeClassifier(random_state = 123)
+    tree = DecisionTreeClassifier(random_state = 123,max_depth=max_depth)
     tree.fit(X_train, y_train)
     train_predict = tree.score(X_train, y_train)
     validate_predict = tree.score(X_validate, y_validate)
-    return tree, train_predict, validate_predict
+    return tree, train_predict, validate_predict, max_depth
 
 
 def create_random_forest(X_train,y_train, X_validate, y_validate):
@@ -270,13 +273,13 @@ def create_random_forest(X_train,y_train, X_validate, y_validate):
     validate_predict = forest.score(X_validate, y_validate)
     return forest, train_predict, validate_predict
 
-def create_logistic_regression(X_train,y_train, X_validate, y_validate):
+def create_logistic_regression(X_train,y_train, X_validate, y_validate,the_c):
     '''
     creating a logistic_regression model
     fitting the logistic_regression model
     predicting the training and validate data
     '''
-    logit = LogisticRegression(random_state= 123)
+    logit = LogisticRegression(random_state= 123,C=the_c)
     logit.fit(X_train, y_train)
     train_predict = logit.score(X_train, y_train)
     validate_predict = logit.score(X_validate, y_validate)
@@ -300,6 +303,129 @@ def print_statement_for_models(baseline ,train_predict, validate_predict):
     '''
     prints the data from the model
     '''
-    print('Baseline',baseline)
-    print('training data prediciton',train_predict)
-    print('validate data prediciton',validate_predict)
+    print('Baseline',baseline.round(2) * 100)
+    print('training data prediciton',train_predict.round(2) * 100)
+    print('validate data prediciton',validate_predict.round(2) * 100)
+
+def the_fifth_visual(train, validate, test):
+    '''
+    creates a random tree classifier model and runs multiple max depths 
+    and stores the results in a pandas dataframe
+    '''
+    columns = validate.columns[21:]
+    columns2 = validate.columns[15:17]
+    the_list_of_columns = []
+    for i in columns:
+        if i != 'churn_Yes' and i != 'churn_No':
+            the_list_of_columns.append(i)
+    for i in columns2:
+        the_list_of_columns.append(i)
+            
+
+    columns = the_list_of_columns
+
+
+    train_list = []
+    validate_list = []
+    features= []
+
+    X_train, X_validate, X_test, y_train, y_validate, y_test = wrangle.model_setup(train, validate, test, columns)
+
+    for i in range(1,20):        
+        tree, train_predict, validate_predict, max_depth= wrangle.create_descision_tree(X_train,y_train, X_validate, y_validate, max_depth=i)
+        train_list.append(train_predict)
+        validate_list.append(validate_predict)
+        features.append(i)
+            
+    the_dataframe = pd.DataFrame({'train':train_list,
+                'validate':validate_list,
+                'features':features,
+                'features':features
+                }
+                )
+    the_dataframe['difference'] = abs(the_dataframe.train - the_dataframe.validate)
+    the_dataframe = the_dataframe.sort_values(by='difference')
+    the_data = the_dataframe
+    the_data = the_data.sort_values(by=['difference','train'], ascending= [True, True])
+    the_data =the_data.reset_index()
+    the_data = the_data.drop(columns = 'index')
+    plt.plot(the_data.index, the_data.train, marker='o')
+    plt.plot(the_data.index, the_data.validate, marker='o')
+    plt.show()
+    return the_data
+
+def getting_weights(tree):
+    columns = ['tech_support_Yes','device_protection_Yes','contract_type_Two year','contract_type_One year','payment_type_Credit_card','payment_type_Electronic_check','payment_type_Mailed_check']
+
+    the_weight = tree.feature_importances_
+    the_weight
+    weights_column = []
+    for i in the_weight:
+        weights_column.append(i)
+        
+    the_dataframe = pd.DataFrame({'columns': columns, 
+                                'the_weight':weights_column})  
+
+    the_dataframe
+    plt.title('Does device_protection affect churn')  
+
+    ax = sns.barplot(x=columns , y=the_weight, data = the_dataframe)
+    ax.tick_params(axis='x', rotation=90)
+    plt.show()
+    
+
+def setup_for_the_extra_model_descision_tree(train,validate, test):
+    columns = validate.columns[21:]
+    columns2 = validate.columns[15:17]
+    the_list_of_columns = []
+    for i in columns:
+        if i != 'churn_Yes' and i != 'churn_No':
+            the_list_of_columns.append(i)
+    for i in columns2:
+        the_list_of_columns.append(i)
+            
+
+    columns = the_list_of_columns
+
+    X_train, X_validate, X_test, y_train, y_validate, y_test = wrangle.model_setup(train, validate, test, columns)
+    tree, train_predict, validate_predict, max_depth= wrangle.create_descision_tree(X_train,y_train, X_validate, y_validate, max_depth=6)
+    return X_train, X_validate, X_test, y_train, y_validate, y_test, tree
+
+
+def getting_weights_max(tree, X_train):
+    columns = X_train.columns
+
+    the_weight = tree.feature_importances_
+    the_weight
+    weights_column = []
+    for i in the_weight:
+        weights_column.append(i)
+        
+    the_dataframe = pd.DataFrame({'columns': columns, 
+                                'the_weight':weights_column})  
+
+    the_dataframe
+    plt.title('Does device_protection affect churn')  
+
+    ax = sns.barplot(x=columns , y=the_weight, data = the_dataframe)
+    ax.tick_params(axis='x', rotation=90)
+    plt.show()
+
+def getting_subgroup(columns, train):
+    the_list = []
+    for i in columns:
+        print(i, 'makes up', (train[i] == 1).mean().round(2) * 100,'percent of the total customer base')
+        the_list.append(train[train[i] == 1])
+
+    return the_list
+
+def get_barplot_for_everything(train):
+    '''
+    gets the barplot for everything
+    '''
+    for i in train.columns:
+        print(i)
+
+        plt.title('Does',str(i),'affect churn')
+        ax = sns.countplot(x=i, data = train, hue = 'churn_Yes')
+        plt.show()

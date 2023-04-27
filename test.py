@@ -21,7 +21,7 @@ df = wrangle.get_telco_data()
 df = wrangle.prep_telco(df)
 
 train, validate, test = wrangle.split_data(df, 'churn_Yes')
-columns = train.columns[21:]
+columns = train.columns[21:32]
 the_list_of_columns = []
 for i in columns:
     if i != 'churn_Yes':
