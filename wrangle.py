@@ -328,7 +328,7 @@ def the_fifth_visual(train, validate, test):
     train_list = []
     validate_list = []
     features= []
-
+    max_depth_column = []
     X_train, X_validate, X_test, y_train, y_validate, y_test = wrangle.model_setup(train, validate, test, columns)
 
     for i in range(1,20):        
@@ -336,11 +336,13 @@ def the_fifth_visual(train, validate, test):
         train_list.append(train_predict)
         validate_list.append(validate_predict)
         features.append(i)
-            
+        max_depth_column.append(i)
+
+
     the_dataframe = pd.DataFrame({'train':train_list,
                 'validate':validate_list,
-                'features':features,
-                'features':features
+                'max_depth':max_depth_column
+                
                 }
                 )
     the_dataframe['difference'] = abs(the_dataframe.train - the_dataframe.validate)
@@ -349,6 +351,11 @@ def the_fifth_visual(train, validate, test):
     the_data = the_data.sort_values(by=['difference','train'], ascending= [True, True])
     the_data =the_data.reset_index()
     the_data = the_data.drop(columns = 'index')
+
+    plt.title('Changing max Depth to find a better model')
+    plt.xlabel('index number')
+    plt.ylabel('Prediction percentage')
+    
     plt.plot(the_data.index, the_data.train, marker='o')
     plt.plot(the_data.index, the_data.validate, marker='o')
     plt.show()
@@ -367,7 +374,7 @@ def getting_weights(tree):
                                 'the_weight':weights_column})  
 
     the_dataframe
-    plt.title('Does device_protection affect churn')  
+    plt.title('Weights of initial columns')  
 
     ax = sns.barplot(x=columns , y=the_weight, data = the_dataframe)
     ax.tick_params(axis='x', rotation=90)
@@ -405,7 +412,7 @@ def getting_weights_max(tree, X_train):
                                 'the_weight':weights_column})  
 
     the_dataframe
-    plt.title('Does device_protection affect churn')  
+    plt.title('Weights of all columns')  
 
     ax = sns.barplot(x=columns , y=the_weight, data = the_dataframe)
     ax.tick_params(axis='x', rotation=90)
@@ -425,13 +432,10 @@ def get_barplot_for_everything(train,name):
     '''
     count = 1
   
-    plt.figure(figsize=(20.0, 20.0))
+    plt.figure(figsize=(20.0, 60.0))
     for i in train.columns[21:]:
-        
         if i != name:
-            
-            
-            plt.title(f'Does {str(i)} affect churn')
+            # plt.title(f'Does {str(i)} affect churn')
             plt.subplot(10, 2, count)
             sns.countplot(x=i, data = train, hue = 'churn_Yes')
             count +=1
